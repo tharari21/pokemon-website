@@ -7,6 +7,8 @@ const pokemonArr = [
   { id: "007", name: "Squirtle" },
 ];
 
+const userRoster = [];
+
 // Value will be null if there is no element with id container.
 const containerDiv = document.querySelector("#container");
 const newBtn = document.querySelector("#new-pokemon-btn");
@@ -14,13 +16,13 @@ const rosterDiv = document.querySelector("#roster");
 
 newBtn.addEventListener("click", () => {
   let pokemonId = prompt("ENTER A POKEMON NUMBER");
-  let div = document.createElement("div");
-  div.className = "pokemon-card";
   let imageUrl = `https://assets.pokemon.com/assets/cms2/img/pokedex/full/${pokemonId}.png`;
   let img = document.createElement("img");
   img.setAttribute("src", imageUrl);
-  div.append(img);
-  containerDiv.append(div);
+  img.setAttribute("class", "roster-img");
+  let position = document.querySelector(`#pokemon-${userRoster.length + 1}`);
+  position.append(img);
+  userRoster.push(pokemonId);
 });
 // Loop over every ID,
 // create HTML element
