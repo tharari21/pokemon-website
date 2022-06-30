@@ -22,16 +22,18 @@ const promptUserForPokemonId = () => {
   while (pokemonId.length > 3) {
     pokemonId = prompt("POKEMON ID MUST BE 3 DIGITS. ENTER A POKEMON ID");
   }
-  if (pokemonId.length === 1) {
-    pokemonId = pokemonId.padStart(2);
-  } else if (pokemonId.length === 2) {
-    pokemonId = pokemonId.padStart(1);
-  }
+  pokemonId = pokemonId.padStart(3, "0");
+
   console.log(pokemonId);
+
   return pokemonId;
 };
 
 const addPokemonToRoster = async () => {
+  if (userRoster.length === 6) {
+    alert("YOU CANNOT HAVE MORE THAN 6 POKEMON IN YOUR ROSTER");
+    return;
+  }
   const pokemonId = promptUserForPokemonId();
 
   let imageUrl = `https://assets.pokemon.com/assets/cms2/img/pokedex/full/${pokemonId}.png`;
