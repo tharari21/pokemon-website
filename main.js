@@ -29,36 +29,61 @@ const promptUserForPokemonId = () => {
   return pokemonId;
 };
 
-const addPokemonToRoster = async () => {
-  if (userRoster.length === 6) {
-    alert("YOU CANNOT HAVE MORE THAN 6 POKEMON IN YOUR ROSTER");
-    return;
-  }
-  const pokemonId = promptUserForPokemonId();
-
-  let imageUrl = `https://assets.pokemon.com/assets/cms2/img/pokedex/full/${pokemonId}.png`;
-  console.log(parseInt(pokemonId).toString());
-  let dataUrl = `https://pokeapi.co/api/v2/pokemon/${parseInt(
-    pokemonId
-  ).toString()}`;
-
+const getPokemonName = async (dataUrl) => {
+  // fetches pokemon name from dataUrl
   let req = await fetch(dataUrl);
   let res = await req.json();
-  let pokemonName = res.forms[0].name;
-  let audioUrl = `https://play.pokemonshowdown.com/audio/cries/${pokemonName}.mp3`;
+  return res.forms[0].name;
+};
+const getAudioTag = (audioUrl) => {
+  // Returns an audio element with the audio of audioUrl
   let audio = document.createElement("audio");
   let source = document.createElement("source");
   source.setAttribute("src", audioUrl);
   source.setAttribute("type", "audio/mpeg");
   audio.append(source);
+  return audio;
+};
+const getImageTag = (imageUrl) => {
+  let img = document.createElement("img");
+  img.setAttribute("src", imageUrl);
+  img.setAttribute("class", "roster-img");
+  return img;
+};
+const getRosterSlot = (index) => {
+  return document.querySelector(`#pokemon-${index}`);
+};
+
+const addPokemonToRoster = async () => {
+  // Check that user has less than 6 pokemon
+  if (userRoster.length === 6) {
+    alert("YOU CANNOT HAVE MORE THAN 6 POKEMON IN YOUR ROSTER");
+    return;
+  }
+  // Get a pokemon ID from user
+  const pokemonId = promptUserForPokemonId();
+
+  // URL for pokemon image
+  let imageUrl = `https://assets.pokemon.com/assets/cms2/img/pokedex/full/${pokemonId}.png`;
+  // URL to get pokemon name
+  let dataUrl = `https://pokeapi.co/api/v2/pokemon/${parseInt(
+    pokemonId
+  ).toString()}`;
+  // Get pokemon name
+  let pokemonName = getPokemonName(dataUrl);
+
+  // Create an audio tag for pokemon audio
+  let audioUrl = `https://play.pokemonshowdown.com/audio/cries/${pokemonName}.mp3`;
+  let audio = getAudioTag(audioUrl);
 
   let h3 = document.createElement("h3");
   h3.innerText = pokemonName;
 
-  let img = document.createElement("img");
-  img.setAttribute("src", imageUrl);
-  img.setAttribute("class", "roster-img");
-  let position = document.querySelector(`#pokemon-${userRoster.length + 1}`);
+  // Create img tag for pokemon
+  let img = getImageTag(imageUrl);
+
+  // Get next div to insert pokemon
+  let position = getRosterSlot(userRoster.length + 1);
   position.addEventListener("click", () => {
     audio.play();
   });
