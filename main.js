@@ -7,30 +7,51 @@ const pokemonArr = [
   { id: "007", name: "Squirtle" },
 ];
 
-const userRoster = [];
+const userRoster = {};
 
 // Value will be null if there is no element with id container.
 const containerDiv = document.querySelector("#container");
 const newBtn = document.querySelector("#new-pokemon-btn");
 const rosterDiv = document.querySelector("#roster");
 
+const displayRoster = () => {
+  // Displays userRoster array as roster"
+  Object.entries(userRoster).forEach(([, value], index) => {
+    let position = getRosterSlot(index + 1);
+    let [img, h3, deleteBtn, audio] = value;
+    position.append(img, h3, deleteBtn, audio);
+  });
+};
+
+const playAudio = (audio) => {
+  audio.play();
+};
+
+const removeAllChildNodes = (parent) => {
+  while (parent.firstChild) {
+    parent.removeChild(parent.firstChild);
+  }
+};
+
 const promptUserForPokemonId = () => {
   // prompt user for pokemon ID
   let pokemonId = prompt("ENTER A POKEMON NUMBER");
   // The dataUrl takes numbers without the 0 padded to the left so let's have a separate variable to store the pokemonId for dataUrl
   // If ID length is greater than 3, it's invalid
-  while (pokemonId.length > 3) {
+  while (pokemonId.length > 3 || pokemonId.length === 0 || pokemonId === null) {
     pokemonId = prompt("POKEMON ID MUST BE 3 DIGITS. ENTER A POKEMON ID");
   }
   pokemonId = pokemonId.padStart(3, "0");
 
-  console.log(pokemonId);
-
   return pokemonId;
 };
 
-const getPokemonName = async (dataUrl) => {
+const getPokemonName = async (pokemonId) => {
   // fetches pokemon name from dataUrl
+  // URL to get pokemon name
+  let dataUrl = `https://pokeapi.co/api/v2/pokemon/${parseInt(
+    pokemonId
+  ).toString()}`;
   let req = await fetch(dataUrl);
   let res = await req.json();
   return res.forms[0].name;
@@ -53,6 +74,59 @@ const getImageTag = (imageUrl) => {
 const getRosterSlot = (index) => {
   return document.querySelector(`#pokemon-${index}`);
 };
+const getObjectLength = (obj) => {
+  return Object.keys(obj).length;
+};
+
+const removePokemonFromRoster = (position, pokemonId) => {
+  let confirmation = confirm(
+    `ARE YOU SURE YOU WOULD LIKE TO DELETE THIS POKEMON FROM YOUR ROSTER`
+  );
+  if (confirmation) {
+    // Remove pokemon from userRoster
+    console.log("Before delete", userRoster);
+    console.log(pokemonId);
+    delete userRoster[pokemonId];
+    console.log("After delete", userRoster);
+
+    // Get deleted position's audio element
+    let audio = position.querySelector("audio");
+    // Remove all children of deleted position
+    removeAllChildNodes(position);
+    // Remove event listener of deleted position
+    position.removeEventListener("click", () => playAudio(audio));
+
+    /* Ask Michael if there is a better solution
+       Goal here is to scoot each event listener over 1 index. 
+       This requires removing the current one and adding the next one to curPosition
+    */
+    // Gets the position index of the deleted position
+    let index = parseInt(position.id.slice(-1));
+    // Store the current position
+    let curPosition = document.querySelector(`#pokemon-${index + 1}`);
+    // Store the next position
+    let nextPosition = document.querySelector(`#pokemon-${index + 2}`);
+    // Store current position's audio
+    let curAudio;
+    // Store next position's audio
+    let nextAudio;
+    while (curPosition) {
+      // scoot each event listener over
+      curAudio = curPosition.querySelector("audio");
+
+      curPosition.removeEventListener("click", () => playAudio(curAudio));
+      if (nextPosition) {
+        nextAudio = nextPosition.querySelector("audio");
+        curPosition.addEventListener("click", () => playAudio(nextAudio));
+      }
+      index++;
+      curPosition = document.querySelector(`#pokemon-${index + 1}`);
+      nextPosition = document.querySelector(`#pokemon-${index + 2}`);
+    }
+
+    displayRoster();
+  }
+};
 
 const addPokemonToRoster = async () => {
   // Check that user has less than 6 pokemon
@@ -65,13 +139,9 @@ const addPokemonToRoster = async () => {
 
   // URL for pokemon image
   let imageUrl = `https://assets.pokemon.com/assets/cms2/img/pokedex/full/${pokemonId}.png`;
-  // URL to get pokemon name
-  let dataUrl = `https://pokeapi.co/api/v2/pokemon/${parseInt(
-    pokemonId
-  ).toString()}`;
-  // Get pokemon name
-  let pokemonName = getPokemonName(dataUrl);
 
+  // Get pokemon name
+  let pokemonName = await getPokemonName(pokemonId);
   // Create an audio tag for pokemon audio
   let audioUrl = `https://play.pokemonshowdown.com/audio/cries/${pokemonName}.mp3`;
   let audio = getAudioTag(audioUrl);
@@ -83,12 +153,19 @@ const addPokemonToRoster = async () => {
   let img = getImageTag(imageUrl);
 
   // Get next div to insert pokemon
-  let position = getRosterSlot(userRoster.length + 1);
+  let position = getRosterSlot(getObjectLength(userRoster) + 1);
   position.addEventListener("click", () => {
-    audio.play();
+    playAudio(audio);
   });
-  position.append(img, h3, audio);
-  userRoster.push(pokemonId);
+
+  let deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "X";
+  deleteBtn.addEventListener("click", () => {
+    removePokemonFromRoster(position, pokemonId);
+  });
+  // position.append(img, h3, del
+  userRoster[pokemonId] = [img, h3, deleteBtn, audio];
+  displayRoster();
 };
 
 newBtn.addEventListener("click", addPokemonToRoster);
